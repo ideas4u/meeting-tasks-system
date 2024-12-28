@@ -24,10 +24,16 @@ export default function TaskConfirmation() {
   const [opinion, setOpinion] = useState('');
 
   useEffect(() => {
-    const loadTask = () => {
-      const taskData = taskService.getTaskById(taskId);
-      if (taskData) {
-        setTask(taskData);
+    const loadTask = async () => {
+      try {
+        const taskData = await taskService.getTaskById(taskId);
+        if (taskData) {
+          console.log('获取到的会议详情:', taskData); // 添加日志
+          setTask(taskData);
+        }
+      } catch (error) {
+        console.error('Failed to load task:', error);
+        // TODO: 添加错误提示
       }
     };
     loadTask();
@@ -37,7 +43,7 @@ export default function TaskConfirmation() {
     const specialty = event.target.value;
     setSelectedSpecialty(specialty);
     // 预填确认人姓名（如果已经设置）
-    const confirmation = task.specialtyConfirmations.find(
+    const confirmation = task.specialtyConfirmations?.find(
       conf => conf.specialty === specialty
     );
     if (confirmation) {
@@ -45,10 +51,10 @@ export default function TaskConfirmation() {
     }
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
     try {
-      const updatedTask = taskService.submitConfirmation(
+      const updatedTask = await taskService.submitConfirmation(
         taskId,
         selectedSpecialty,
         confirmerName,
@@ -59,6 +65,7 @@ export default function TaskConfirmation() {
       }
     } catch (error) {
       console.error('Failed to submit confirmation:', error);
+      // TODO: 添加错误提示
     }
   };
 
@@ -66,9 +73,19 @@ export default function TaskConfirmation() {
     return <Typography>加载中...</Typography>;
   }
 
-  const pendingConfirmations = task.specialtyConfirmations.filter(
+  const pendingConfirmations = task.specialtyConfirmations?.filter(
     conf => conf.status === 'pending'
-  );
+  ) || [];
+
+  const formatDateTime = (dateStr) => {
+    if (!dateStr) return '未设置';
+    try {
+      return new Date(dateStr).toLocaleString();
+    } catch (error) {
+      console.error('日期格式化错误:', error);
+      return dateStr;
+    }
+  };
 
   return (
     <Container maxWidth="md">
@@ -84,7 +101,7 @@ export default function TaskConfirmation() {
 
         <Box sx={{ mb: 3 }}>
           <Typography variant="h6">会议时间</Typography>
-          <Typography>{new Date(task.meetingTime).toLocaleString()}</Typography>
+          <Typography>{formatDateTime(task.meeting_time)}</Typography>
         </Box>
 
         {pendingConfirmations.length === 0 ? (
@@ -148,7 +165,7 @@ export default function TaskConfirmation() {
           <Typography variant="h6" gutterBottom>
             确认状态
           </Typography>
-          {task.specialtyConfirmations.map((conf) => (
+          {task.specialtyConfirmations?.map((conf) => (
             <Box key={conf.specialty} sx={{ mb: 2 }}>
               <Typography variant="subtitle1">
                 {conf.specialty}：{conf.status === 'confirmed' ? '已确认' : '待确认'}
@@ -158,7 +175,7 @@ export default function TaskConfirmation() {
                   <Typography variant="body2">确认人：{conf.specialist}</Typography>
                   <Typography variant="body2">确认意见：{conf.opinion}</Typography>
                   <Typography variant="body2">
-                    确认时间：{new Date(conf.confirmedAt).toLocaleString()}
+                    确认时间：{formatDateTime(conf.confirmed_at)}
                   </Typography>
                 </>
               )}

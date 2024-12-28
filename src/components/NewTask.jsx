@@ -73,12 +73,12 @@ export default function NewTask() {
     }));
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
     try {
-      const task = taskService.createTask(formData);
+      const task = await taskService.createTask(formData);
       console.log('Created task:', task);
-      navigate('/'); // 创建成功后跳转到列表页
+      navigate('/');
     } catch (error) {
       console.error('Failed to create task:', error);
       // TODO: 添加错误提示

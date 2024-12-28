@@ -1,83 +1,53 @@
-// 生成唯一ID的辅助函数
-const generateId = () => Date.now().toString(36) + Math.random().toString(36).substr(2);
+import axios from 'axios';
 
-// 从 localStorage 获取数据的辅助函数
-const getStoredTasks = () => {
-  const tasks = localStorage.getItem('tasks');
-  return tasks ? JSON.parse(tasks) : [];
-};
-
-// 将数据保存到 localStorage 的辅助函数
-const storeTasks = (tasks) => {
-  localStorage.setItem('tasks', JSON.stringify(tasks));
-};
+const API_BASE_URL = 'http://localhost:3000/api';
 
 export const taskService = {
   // 创建新会议任务
-  createTask: (taskData) => {
-    const tasks = getStoredTasks();
-    const newTask = {
-      id: generateId(),
-      ...taskData,
-      status: 'pending', // pending, confirmed
-      specialtyConfirmations: taskData.specialties.map(specialty => ({
-        specialty,
-        specialist: taskData.specialists[specialty],
-        status: 'pending', // pending, confirmed
-        opinion: null,
-        confirmedAt: null
-      })),
-      createdAt: new Date().toISOString()
-    };
-    
-    tasks.push(newTask);
-    storeTasks(tasks);
-    return newTask;
+  createTask: async (taskData) => {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/meetings`, taskData);
+      return response.data;
+    } catch (error) {
+      console.error('Failed to create task:', error);
+      throw error;
+    }
   },
 
   // 获取所有会议任务
-  getAllTasks: () => {
-    return getStoredTasks();
+  getAllTasks: async () => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/meetings`);
+      return response.data;
+    } catch (error) {
+      console.error('Failed to fetch tasks:', error);
+      throw error;
+    }
   },
 
   // 获取单个会议任务
-  getTaskById: (taskId) => {
-    const tasks = getStoredTasks();
-    return tasks.find(task => task.id === taskId);
+  getTaskById: async (taskId) => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/meetings/${taskId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Failed to fetch task:', error);
+      throw error;
+    }
   },
 
   // 提交专业确认意见
-  submitConfirmation: (taskId, specialty, confirmerName, opinion) => {
-    const tasks = getStoredTasks();
-    const taskIndex = tasks.findIndex(task => task.id === taskId);
-    
-    if (taskIndex === -1) return null;
-
-    const task = tasks[taskIndex];
-    const confirmationIndex = task.specialtyConfirmations.findIndex(
-      conf => conf.specialty === specialty
-    );
-
-    if (confirmationIndex === -1) return null;
-
-    task.specialtyConfirmations[confirmationIndex] = {
-      ...task.specialtyConfirmations[confirmationIndex],
-      status: 'confirmed',
-      specialist: confirmerName,
-      opinion,
-      confirmedAt: new Date().toISOString()
-    };
-
-    // 检查是否所有专业都已确认
-    const allConfirmed = task.specialtyConfirmations.every(
-      conf => conf.status === 'confirmed'
-    );
-    if (allConfirmed) {
-      task.status = 'confirmed';
+  submitConfirmation: async (taskId, specialty, confirmerName, opinion) => {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/meetings/${taskId}/confirm`, {
+        specialty,
+        specialist: confirmerName,
+        opinion
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Failed to submit confirmation:', error);
+      throw error;
     }
-
-    tasks[taskIndex] = task;
-    storeTasks(tasks);
-    return task;
   }
 }; 

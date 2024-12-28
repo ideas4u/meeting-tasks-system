@@ -16,9 +16,15 @@ export default function TaskList() {
   const [tasks, setTasks] = useState([]);
 
   useEffect(() => {
-    const loadTasks = () => {
-      const allTasks = taskService.getAllTasks();
-      setTasks(allTasks);
+    const loadTasks = async () => {
+      try {
+        const allTasks = await taskService.getAllTasks();
+        console.log('获取到的会议列表:', allTasks);
+        setTasks(allTasks);
+      } catch (error) {
+        console.error('Failed to load tasks:', error);
+        // TODO: 添加错误提示
+      }
     };
     loadTasks();
   }, []);
@@ -45,13 +51,13 @@ export default function TaskList() {
               secondary={
                 <>
                   <Typography variant="body2" component="span" display="block">
-                    会议时间：{new Date(task.meetingTime).toLocaleString()}
+                    会议时间：{task.meeting_time ? new Date(task.meeting_time).toLocaleString() : '未设置'}
                   </Typography>
                   <Typography variant="body2" component="span" display="block">
                     会议区域：{task.area}
                   </Typography>
                   <Box sx={{ mt: 1 }}>
-                    {task.specialtyConfirmations.map((conf) => (
+                    {task.specialtyConfirmations?.map((conf) => (
                       <Chip
                         key={conf.specialty}
                         label={`${conf.specialty}: ${conf.status === 'confirmed' ? '已确认' : '待确认'}`}
