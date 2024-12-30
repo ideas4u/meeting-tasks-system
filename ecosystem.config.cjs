@@ -6,7 +6,7 @@ module.exports = {
     env_production: {
       NODE_ENV: "production",
       PORT: 3001,
-      DB_HOST: "localhost",
+      DB_HOST: "43.139.222.146",
       DB_USER: "root",
       DB_PASSWORD: "123456",
       DB_NAME: "meeting_tasks",
